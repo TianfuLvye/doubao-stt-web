@@ -1,0 +1,15 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.wav
+*.mp3
+*.mpeg
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.amr
+*.spx
+*.mp4
