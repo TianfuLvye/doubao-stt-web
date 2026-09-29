@@ -32,6 +32,69 @@ main {
   padding: 2.5rem 0 4rem;
 }
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lang-switch {
+  display: flex;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.lang-switch label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  min-height: 40px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.lang-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+.lang-switch label:has(input:checked) {
+  background: var(--teal);
+  color: #fff;
+}
+
+.lang-switch label:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
 .page-header h1 {
   margin: 0.2rem 0 0.6rem;
   font-family: "Iowan Old Style", Palatino, "Songti SC", "Noto Serif SC", serif;
@@ -384,6 +447,10 @@ a {
 }
 
 @media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+  }
+
   .transcript li {
     grid-template-columns: 1fr;
     gap: 0.15rem;

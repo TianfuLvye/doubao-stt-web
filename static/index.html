@@ -9,17 +9,30 @@
   <body>
     <main>
       <header class="page-header">
-        <p class="eyebrow">豆包语音 · 录音文件识别模型 2.0</p>
-        <h1>语音转写</h1>
-        <p class="lede">
-          把录音拖进下面的区域。本地服务会把文件交给火山引擎，转成带时间戳和说话人的文字。
-          单文件不超过 512MB、5 小时。结果通常要等几分钟。
-        </p>
+        <div class="intro">
+          <p class="eyebrow" data-i18n="eyebrow">豆包语音 · 录音文件识别模型 2.0</p>
+          <h1 data-i18n="title">语音转写</h1>
+          <p class="lede" data-i18n="lede">
+            把录音拖进下面的区域。本地服务会把文件交给火山引擎，转成带时间戳和说话人的文字。
+            单文件不超过 512MB、5 小时。结果通常要等几分钟。
+          </p>
+        </div>
+        <fieldset class="lang-switch">
+          <legend class="visually-hidden" data-i18n="langLegend">语言</legend>
+          <label>
+            <input type="radio" name="ui-lang" value="zh" checked>
+            <span>中文</span>
+          </label>
+          <label>
+            <input type="radio" name="ui-lang" value="en">
+            <span>English</span>
+          </label>
+        </fieldset>
       </header>
 
       <form id="form" action="/api/transcribe" method="post">
         <fieldset>
-          <legend>接口凭证</legend>
+          <legend data-i18n="credentials">接口凭证</legend>
           <div class="field">
             <label for="api-key">API Key</label>
             <div class="password-row">
@@ -44,11 +57,11 @@
         </fieldset>
 
         <fieldset>
-          <legend>录音文件</legend>
+          <legend data-i18n="files">录音文件</legend>
           <div class="field">
             <label class="dropzone" id="dropzone" for="file">
-              <span class="dropzone-title" id="drop-title">把录音拖到这里，或点击选择</span>
-              <span class="hint" id="drop-hint">wav、mp3、m4a、aac、ogg、amr。可以一次放多段，会按顺序转写。</span>
+              <span class="dropzone-title" id="drop-title" data-i18n="dropTitle">把录音拖到这里，或点击选择</span>
+              <span class="hint" id="drop-hint" data-i18n="dropHint">wav、mp3、m4a、aac、ogg、amr。可以一次放多段，会按顺序转写。</span>
             </label>
             <input
               id="file"
@@ -63,42 +76,43 @@
         </fieldset>
 
         <fieldset>
-          <legend>识别选项</legend>
+          <legend data-i18n="options">识别选项</legend>
           <div class="checks">
             <label class="check" for="enable-speaker">
               <input id="enable-speaker" name="enable_speaker_info" type="checkbox" checked>
-              <span>区分说话人</span>
+              <span data-i18n="optSpeaker">区分说话人</span>
             </label>
             <label class="check" for="enable-punc">
               <input id="enable-punc" name="enable_punc" type="checkbox" checked>
-              <span>自动标点</span>
+              <span data-i18n="optPunc">自动标点</span>
             </label>
             <label class="check" for="enable-itn">
               <input id="enable-itn" name="enable_itn" type="checkbox" checked>
-              <span>数字规整</span>
+              <span data-i18n="optItn">数字规整</span>
             </label>
             <label class="check" for="enable-ddc">
               <input id="enable-ddc" name="enable_ddc" type="checkbox">
-              <span>去掉口头禅</span>
+              <span data-i18n="optDdc">去掉口头禅</span>
             </label>
             <label class="check" for="enable-channel">
               <input id="enable-channel" name="enable_channel_split" type="checkbox">
-              <span>左右声道分开</span>
+              <span data-i18n="optChannel">左右声道分开</span>
             </label>
           </div>
           <div class="field">
-            <label for="hotwords">专有名词</label>
+            <label for="hotwords" data-i18n="hotwords">专有名词</label>
             <textarea
               id="hotwords"
               name="hotwords"
               rows="3"
+              data-i18n-placeholder="hotwordsPlaceholder"
               placeholder="每行一个，例如人名、产品名、专业术语"></textarea>
-            <p class="hint">这些词会优先被识别出来。人名、产品名、专业术语可以写在这里。</p>
+            <p class="hint" data-i18n="hotwordsHint">这些词会优先被识别出来。人名、产品名、专业术语可以写在这里。</p>
           </div>
         </fieldset>
 
         <div class="actions">
-          <button type="submit" id="submit">开始转写</button>
+          <button type="submit" id="submit" data-i18n="submit">开始转写</button>
         </div>
         <p id="status" class="status" role="status" aria-live="polite"></p>
         <progress id="progress" hidden max="100" value="0"></progress>

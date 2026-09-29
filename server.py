@@ -41,16 +41,61 @@ FORMATS = {
     ".mp4": "mp4",
 }
 
-STATUS_HINTS = {
-    "20000000": "识别成功",
-    "20000003": "音频里几乎没有人声",
-    "45000001": "请求参数无效。请确认开通的是豆包录音文件识别模型 2.0，并且文件是 wav、mp3、m4a 等支持的格式。",
-    "45000010": "API Key 无效。请到豆包语音控制台的 API Key 管理里重新复制。",
-    "45000002": "音频是空的",
-    "45000132": "文件超过模型 2.0 的大小限制（512MB）。",
-    "45000151": "音频格式无法解码。请另存为 mp3 或 m4a 后再试。",
-    "55000031": "火山引擎这会儿繁忙，过一两分钟再试。",
+MESSAGES = {
+    "zh": {
+        "no_file": "请先选择录音文件。",
+        "no_key": "请填写火山引擎 API Key。",
+        "empty_file": "这个文件是空的。",
+        "too_big": "文件超过 512MB。模型 2.0 单文件上限是 512MB、5 小时。",
+        "bad_format": "不支持这个格式。请使用 wav、mp3、m4a、aac、ogg、amr。",
+        "unreachable": "连不上火山引擎：{reason}",
+        "timeout": "等待火山引擎超时。文件很大时可以再试一次。",
+        "still_running": "任务已提交，但 30 分钟内还没有结果。可以过一会儿再试一次。",
+        "query_timeout": "等待火山引擎超时。",
+        "no_result": "火山引擎没有返回识别结果。",
+        "http_status": "火山引擎返回 HTTP {status}。{message}",
+        "detail": "{hint}（{detail}）",
+        "20000003": "音频里几乎没有人声",
+        "45000001": "请求参数无效。请确认开通的是豆包录音文件识别模型 2.0，并且文件是 wav、mp3、m4a 等支持的格式。",
+        "45000010": "API Key 无效。请到豆包语音控制台的 API Key 管理里重新复制。",
+        "45000002": "音频是空的",
+        "45000132": "文件超过模型 2.0 的大小限制（512MB）。",
+        "45000151": "音频格式无法解码。请另存为 mp3 或 m4a 后再试。",
+        "55000031": "火山引擎这会儿繁忙，过一两分钟再试。",
+    },
+    "en": {
+        "no_file": "Choose a recording first.",
+        "no_key": "Enter your Volcano Engine API Key.",
+        "empty_file": "This file is empty.",
+        "too_big": "The file is over 512 MB. Model 2.0 allows up to 512 MB and 5 hours.",
+        "bad_format": "This format is not supported. Use wav, mp3, m4a, aac, ogg, or amr.",
+        "unreachable": "Could not reach Volcano Engine: {reason}",
+        "timeout": "Volcano Engine timed out. If the file is large, try again.",
+        "still_running": "The task was submitted, but there is still no result after 30 minutes. Try again later.",
+        "query_timeout": "Volcano Engine timed out.",
+        "no_result": "Volcano Engine did not return a transcript.",
+        "http_status": "Volcano Engine returned HTTP {status}. {message}",
+        "detail": "{hint} ({detail})",
+        "20000003": "Almost no speech was detected",
+        "45000001": "Invalid request. Confirm that Doubao Recording File Recognition Model 2.0 is enabled, and that the file is wav, mp3, or m4a.",
+        "45000010": "The API Key is invalid. Copy it again from API Key Management in the Doubao Speech Console.",
+        "45000002": "The audio is empty",
+        "45000132": "The file exceeds the Model 2.0 size limit (512 MB).",
+        "45000151": "The audio could not be decoded. Save it as mp3 or m4a and try again.",
+        "55000031": "Volcano Engine is busy. Try again in a minute or two.",
+    },
 }
+
+
+def ui_lang() -> str:
+    raw = request.headers.get("X-Ui-Lang") or request.form.get("lang") or ""
+    return "en" if str(raw).lower().startswith("en") else "zh"
+
+
+def tr(key: str, **kwargs: object) -> str:
+    lang = ui_lang()
+    text = MESSAGES.get(lang, MESSAGES["zh"]).get(key) or MESSAGES["zh"][key]
+    return text.format(**kwargs) if kwargs else text
 
 app = Flask(__name__, static_folder=str(STATIC), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_BYTES
@@ -146,11 +191,11 @@ def post_json(url: str, api_key: str, request_id: str, payload: dict, timeout: i
         headers = exc.headers
         http_status = exc.code
     except TimeoutError as exc:
-        raise TimeoutError("等待火山引擎超时。") from exc
+        raise TimeoutError(tr("query_timeout")) from exc
     except urllib.error.URLError as exc:
         if isinstance(exc.reason, TimeoutError):
-            raise TimeoutError("等待火山引擎超时。") from exc
-        raise UpstreamError(f"连不上火山引擎：{exc.reason}") from exc
+            raise TimeoutError(tr("query_timeout")) from exc
+        raise UpstreamError(tr("unreachable", reason=exc.reason)) from exc
 
     meta = {
         "http_status": http_status,
@@ -226,7 +271,7 @@ def call_model(api_key: str, audio_format: str, audio_bytes: bytes, options: dic
             continue
         return meta, body
 
-    raise UpstreamError("任务已提交，但 30 分钟内还没有结果。可以过一会儿再试一次。")
+    raise UpstreamError(tr("still_running"))
 
 
 class UpstreamError(Exception):
@@ -240,31 +285,28 @@ def index():
 
 @app.errorhandler(413)
 def too_large(_exc):
-    return jsonify(ok=False, message="文件超过 512MB。模型 2.0 单文件上限是 512MB、5 小时。"), 413
+    return jsonify(ok=False, message=tr("too_big")), 413
 
 
 @app.post("/api/transcribe")
 def transcribe():
     upload = request.files.get("file")
     if upload is None or not upload.filename:
-        return jsonify(ok=False, message="请先选择录音文件。"), 400
+        return jsonify(ok=False, message=tr("no_file")), 400
 
     api_key = (request.form.get("api_key") or os.environ.get("VOLCENGINE_API_KEY") or "").strip()
     if not api_key:
-        return jsonify(ok=False, message="请填写火山引擎 API Key。"), 400
+        return jsonify(ok=False, message=tr("no_key")), 400
 
     data = upload.read()
     if not data:
-        return jsonify(ok=False, message="这个文件是空的。"), 400
+        return jsonify(ok=False, message=tr("empty_file")), 400
     if len(data) > MAX_BYTES:
-        return jsonify(ok=False, message="文件超过 512MB。模型 2.0 单文件上限是 512MB、5 小时。"), 400
+        return jsonify(ok=False, message=tr("too_big")), 400
 
     audio_format = detect_format(upload.filename, data)
     if audio_format is None:
-        return jsonify(
-            ok=False,
-            message="不支持这个格式。请使用 wav、mp3、m4a、aac、ogg、amr。",
-        ), 400
+        return jsonify(ok=False, message=tr("bad_format")), 400
 
     options = {
         "enable_itn": flag("enable_itn", True),
@@ -280,7 +322,7 @@ def transcribe():
     except UpstreamError as exc:
         return jsonify(ok=False, message=str(exc)), 502
     except TimeoutError:
-        return jsonify(ok=False, message="等待火山引擎超时。文件很大时可以再试一次。"), 504
+        return jsonify(ok=False, message=tr("timeout")), 504
 
     print(
         f"transcribe file={upload.filename!r} bytes={len(data)} format={audio_format} "
@@ -288,14 +330,15 @@ def transcribe():
     )
 
     if meta["status_code"] != "20000000":
-        hint = STATUS_HINTS.get(meta["status_code"])
+        hint = tr(meta["status_code"]) if meta["status_code"] in MESSAGES["zh"] else ""
         detail = meta["message"] or (body.get("message") if isinstance(body.get("message"), str) else "")
         if hint and detail and detail not in hint:
-            message = f"{hint}（{detail}）"
+            message = f"{hint}（{detail}）" if ui_lang() == "zh" else f"{hint} ({detail})"
         else:
-            message = hint or detail or "火山引擎没有返回识别结果。"
+            message = hint or detail or tr("no_result")
         if not meta["status_code"] and meta["http_status"] and meta["http_status"] != 200:
-            message = f"火山引擎返回 HTTP {meta['http_status']}。{message}".strip()
+            prefix = f"火山引擎返回 HTTP {meta['http_status']}。" if ui_lang() == "zh" else f"Volcano Engine returned HTTP {meta['http_status']}. "
+            message = f"{prefix}{message}".strip()
         return jsonify(
             ok=False,
             message=message.strip(),
@@ -323,4 +366,5 @@ def transcribe():
 if __name__ == "__main__":
     load_env_file()
     print("打开 http://127.0.0.1:8765")
+    print("Open http://127.0.0.1:8765")
     app.run(host="127.0.0.1", port=8765, debug=False)
